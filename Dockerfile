@@ -10,6 +10,7 @@ ADD entrypoint.sh /entrypoint.sh
 
 EXPOSE 1521
 
+VOLUME ["/u01/app/oracle"]
 VOLUME ["/docker-entrypoint-initdb.d"]
 
 ENTRYPOINT ["/entrypoint.sh"]
