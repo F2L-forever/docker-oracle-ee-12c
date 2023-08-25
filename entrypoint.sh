@@ -29,10 +29,10 @@ grant connect, resource to $DUMP_NAME;
 exit;
 EOL
 
-	su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @/tmp/impdp.sql"
-	su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/impdp IMPDP/IMPDP directory=IMPDP dumpfile=$DUMP_FILE $IMPDP_OPTIONS"
+	su oracle -c "NLS_LANG=.$ORACLE_CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @/tmp/impdp.sql"
+	su oracle -c "NLS_LANG=.$ORACLE_CHARACTER_SET $ORACLE_HOME/bin/impdp IMPDP/IMPDP directory=IMPDP dumpfile=$DUMP_FILE $IMPDP_OPTIONS"
 	#Disable IMPDP user
-	echo -e 'ALTER USER IMPDP ACCOUNT LOCK;\nexit;' | su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba"
+	echo -e 'ALTER USER IMPDP ACCOUNT LOCK;\nexit;' | su oracle -c "NLS_LANG=.$ORACLE_CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba"
 	set -e
 }
 
@@ -53,8 +53,8 @@ case "$1" in
 			echo "Database not initialized. Initializing database."
 			export IMPORT_FROM_VOLUME=true
 
-			if [ -z "$CHARACTER_SET" ]; then
-				export CHARACTER_SET="AL32UTF8"
+			if [ -z "$ORACLE_CHARACTER_SET" ]; then
+				export ORACLE_CHARACTER_SET="AL32UTF8"
 			fi
 
 			#printf "Setting up:\nprocesses=$processes\nsessions=$sessions\ntransactions=$transactions\n"
@@ -66,7 +66,7 @@ case "$1" in
 			su oracle -c "/u01/app/oracle/product/12.2.0/EE/bin/tnslsnr &"
 
 			#create DB for SID: $ORACLE_SID
-			su oracle -c "$ORACLE_HOME/bin/dbca -silent -createDatabase -templateName General_Purpose.dbc -gdbname ee.oracle.docker -sid $ORACLE_SID -responseFile NO_VALUE -characterSet $CHARACTER_SET -totalMemory $DBCA_TOTAL_MEMORY -emConfiguration LOCAL -pdbAdminPassword oracle -sysPassword oracle -systemPassword oracle"
+			su oracle -c "$ORACLE_HOME/bin/dbca -silent -createDatabase -templateName General_Purpose.dbc -gdbname ee.oracle.docker -sid $ORACLE_SID -responseFile NO_VALUE -characterSet $ORACLE_CHARACTER_SET -totalMemory $DBCA_TOTAL_MEMORY -emConfiguration LOCAL -pdbAdminPassword $ORACLE_PWD -sysPassword $ORACLE_PWD -systemPassword $ORACLE_PWD"
 		fi
 
 		if [ $IMPORT_FROM_VOLUME ]; then
@@ -76,7 +76,7 @@ case "$1" in
 				echo "found file /docker-entrypoint-initdb.d/$f"
 				case "$f" in
 					*.sh)     echo "[IMPORT] $0: running $f"; . "$f" ;;
-					*.sql)    echo "[IMPORT] $0: running $f"; echo "exit" | su oracle -c "NLS_LANG=.$CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @$f"; echo ;;
+					*.sql)    echo "[IMPORT] $0: running $f"; echo "exit" | su oracle -c "NLS_LANG=.$ORACLE_CHARACTER_SET $ORACLE_HOME/bin/sqlplus -S / as sysdba @$f"; echo ;;
 					*.dmp)    echo "[IMPORT] $0: running $f"; impdp $f ;;
 					*)        echo "[IMPORT] $0: ignoring $f" ;;
 				esac
